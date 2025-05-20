@@ -147,7 +147,7 @@ async function startServer() {
   await connectToMongo();
   await setupNats();
   app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
+    console.log(`Server running on port ${port}`);
   });
 }
 
