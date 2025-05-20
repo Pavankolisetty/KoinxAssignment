@@ -3,6 +3,12 @@ const { MongoClient } = require('mongodb');
 const { connect, StringCodec } = require('nats');
 const dotenv = require('dotenv');
 const { storeCryptoStats } = require('./cryptoService');
+const { connect } = require('nats');
+const NATS_URL = process.env.NATS_URL || 'nats://localhost:4222';
+const NATS_CREDS = process.env.NATS_CREDS;
+
+
+
 
 // Load environment variables from .env file
 dotenv.config();
@@ -30,24 +36,19 @@ async function connectToMongo() {
 }
 
 // Connect to NATS and subscribe to events
-async function setupNats() {
+async function connectToNATS() {
   try {
-    const nc = await connect({ servers: 'nats://localhost:4222' });
-    console.log('API server connected to NATS');
-
-    const sc = StringCodec();
-    const sub = nc.subscribe('crypto.update');
-    for await (const msg of sub) {
-      const data = JSON.parse(sc.decode(msg.data));
-      console.log('Received NATS message:', data);
-      if (data.trigger === 'update') {
-        await storeCryptoStats();
-      }
-    }
-  } catch (error) {
-    console.error('NATS connection error:', error.message);
+    const nc = await connect({
+      servers: NATS_URL,
+      userCreds: NATS_CREDS ? { creds: NATS_CREDS } : undefined
+    });
+    console.log('Connected to NATS');
+    return nc;
+  } catch (err) {
+    console.error('NATS connection error:', err.message);
+    throw err;
   }
-}
+
 
 // Middleware to parse JSON requests
 app.use(express.json());
